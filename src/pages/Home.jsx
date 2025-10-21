@@ -2,93 +2,90 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { CheckCircle, Zap, Target, TrendingUp, ArrowRight, Sparkles } from 'lucide-react'
+
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
-import Hero from '../components/sections/Hero'
+import Hero from '../components/sections/Hero' // (kept in case you use it elsewhere)
 import Features from '../components/sections/Features'
 import Testimonials from '../components/sections/Testimonials'
 import Pricing from '../components/sections/Pricing'
 import CallToAction from '../components/sections/CallToAction'
+
 import { updatePageSEO, addStructuredData } from '../lib/seo'
 import { useAuth } from '../lib/auth'
-import ModalQuotaReached from '../components/modals/ModalQuotaReached'
-import toast from 'react-hot-toast'
-import { api } from '../lib/api'
+
+// NEW: replace old quota modal with dedicated demo + preview modals
+import ModalDemo from '../components/modals/ModalDemo'
+import ModalArticlePreview from '../components/modals/ModalArticlePreview'
 
 export default function Home() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
+
+  // NEW: state for the new flow
   const [showDemoModal, setShowDemoModal] = useState(false)
-  const [generatingDemo, setGeneratingDemo] = useState(false)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [generatedArticle, setGeneratedArticle] = useState(null)
 
   useEffect(() => {
     updatePageSEO({
       title: 'SEOScribe - AI-Powered Article Writer & SEO Content Generator',
-      description: 'Generate SEO-optimized articles in minutes with SEOScribe\'s AI article writer. Create 3000+ word content with built-in research, citations, and SEO tools. Start free today.',
+      description:
+        "Generate SEO-optimized articles in minutes with SEOScribe's AI article writer. Create 3000+ word content with built-in research, citations, and SEO tools. Start free today.",
       canonical: 'https://seoscribe.pro/',
-      keywords: ['article writer', 'SEO article writer', 'AI content generator', 'SEO writing tool', 'content creation']
+      keywords: [
+        'article writer',
+        'SEO article writer',
+        'AI content generator',
+        'SEO writing tool',
+        'content creation',
+      ],
     })
 
     addStructuredData({
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      "name": "SEOScribe - AI Article Writer",
-      "description": "Professional AI-powered article writer for SEO-optimized content",
-      "url": "https://seoscribe.pro/",
-      "mainEntity": {
-        "@type": "SoftwareApplication",
-        "name": "SEOScribe",
-        "applicationCategory": "BusinessApplication",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        }
-      }
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      name: 'SEOScribe - AI Article Writer',
+      description: 'Professional AI-powered article writer for SEO-optimized content',
+      url: 'https://seoscribe.pro/',
+      mainEntity: {
+        '@type': 'SoftwareApplication',
+        name: 'SEOScribe',
+        applicationCategory: 'BusinessApplication',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+      },
     })
   }, [])
 
-  async function handleTryDemo() {
+  // NEW: Launch demo modal if logged out; go to dashboard if authed
+  function handleTryDemo() {
     if (isAuthenticated) {
       navigate('/dashboard')
-      return
-    }
-
-    // Guest demo flow
-    setGeneratingDemo(true)
-    try {
-      const result = await api.generateDraft({
-        topic: 'The Ultimate Guide to Content Marketing in 2025',
-        tone: 'professional',
-        target_word_count: 3000,
-        research: true
-      })
-      
-      // Show result in a modal or navigate to a preview page
-      toast.success('Demo article generated! Sign up to save and create more.')
+    } else {
       setShowDemoModal(true)
-      
-    } catch (error) {
-      if (error.message.includes('Demo limit reached')) {
-        toast.error('Demo limit reached. Sign up for free to continue!')
-        setTimeout(() => navigate('/signup'), 2000)
-      } else {
-        toast.error('Failed to generate demo. Please try again.')
-      }
-    } finally {
-      setGeneratingDemo(false)
     }
+  }
+
+  // NEW: Receive generated article from ModalDemo and open preview
+  function handleDemoSuccess(article) {
+    setGeneratedArticle(article)
+    setShowDemoModal(false)
+    setShowPreviewModal(true)
   }
 
   return (
     <div className="min-h-screen bg-gray-950">
       <Navbar />
-      
+
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero"></div>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20"></div>
-        
+
         <div className="container-custom relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -99,7 +96,7 @@ export default function Home() {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-8"
             >
               <Sparkles className="w-4 h-4 text-accent-400" />
@@ -108,35 +105,21 @@ export default function Home() {
 
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               Write <span className="text-gradient">SEO-Optimized</span>
-              <br />Articles in Minutes
+              <br />
+              Articles in Minutes
             </h1>
 
             <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
-              Professional AI article writer with built-in research, citations, and SEO tools. Create content that ranks and converts.
+              Professional AI article writer with built-in research, citations, and SEO tools. Create content
+              that ranks and converts.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button
-                onClick={handleTryDemo}
-                disabled={generatingDemo}
-                className="btn-primary text-lg group"
-              >
-                {generatingDemo ? (
-                  <>
-                    <div className="spinner mr-2"></div>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    Try Free Demo
-                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
+              <button onClick={handleTryDemo} className="btn-primary text-lg group">
+                Try Free Demo
+                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button
-                onClick={() => navigate('/signup')}
-                className="btn-ghost text-lg"
-              >
+              <button onClick={() => navigate('/signup')} className="btn-ghost text-lg">
                 View Pricing
               </button>
             </div>
@@ -187,21 +170,23 @@ export default function Home() {
               {
                 step: '01',
                 title: 'Enter Your Topic',
-                description: 'Simply describe what you want to write about. Our AI article writer understands context and intent.',
-                icon: '✍️'
+                description:
+                  'Simply describe what you want to write about. Our AI article writer understands context and intent.',
+                icon: '✍️',
               },
               {
                 step: '02',
                 title: 'AI Researches & Writes',
-                description: 'Our SEO article writer researches top-ranking content, analyzes competitors, and generates optimized articles.',
-                icon: '🔍'
+                description:
+                  'Our SEO article writer researches top-ranking content, analyzes competitors, and generates optimized articles.',
+                icon: '🔍',
               },
               {
                 step: '03',
                 title: 'Edit & Publish',
                 description: 'Review, refine with built-in SEO tools, and publish content that ranks on Google.',
-                icon: '🚀'
-              }
+                icon: '🚀',
+              },
             ].map((item, i) => (
               <motion.div
                 key={i}
@@ -239,12 +224,20 @@ export default function Home() {
 
       <Footer />
 
+      {/* Demo Modal */}
       {showDemoModal && (
-        <ModalQuotaReached
-          title="Demo Complete!"
-          message="Sign up for free to save this article and create unlimited content."
+        <ModalDemo
           onClose={() => setShowDemoModal(false)}
-          onUpgrade={() => navigate('/signup')}
+          onSuccess={handleDemoSuccess}
+          onSignupPrompt={() => navigate('/signup')}
+        />
+      )}
+
+      {/* Article Preview Modal */}
+      {showPreviewModal && generatedArticle && (
+        <ModalArticlePreview
+          article={generatedArticle}
+          onClose={() => setShowPreviewModal(false)}
         />
       )}
     </div>
