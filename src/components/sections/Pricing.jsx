@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Check, Crown, Zap } from 'lucide-react'
+import { Check, Crown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/auth'
 
@@ -18,10 +18,10 @@ export default function Pricing() {
         '3000+ word articles',
         'Built-in research & citations',
         'All SEO tools (1/day each)',
-        'Basic support'
+        'Basic support',
       ],
       cta: 'Start Free',
-      popular: false
+      popular: false,
     },
     {
       name: 'Pro',
@@ -36,11 +36,11 @@ export default function Pricing() {
         'Priority support',
         'Team collaboration',
         'Export options',
-        'API access'
+        'API access',
       ],
       cta: 'Upgrade to Pro',
-      popular: true
-    }
+      popular: true,
+    },
   ]
 
   function handleCTA(plan) {
@@ -70,17 +70,15 @@ export default function Pricing() {
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {plans.map((plan, i) => (
             <motion.div
-              key={i}
+              key={plan.name}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.2 }}
-              className={`glass-card p-8 relative ${
-                plan.popular ? 'border-2 border-primary-500' : ''
-              }`}
+              className={`glass-card p-8 relative ${plan.popular ? 'border-2 border-primary-500' : ''}`}
             >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                   <div className="flex items-center gap-2 px-4 py-1 rounded-full bg-gradient-primary text-sm font-medium">
                     <Crown className="w-4 h-4" />
                     Most Popular
@@ -98,8 +96,8 @@ export default function Pricing() {
               </div>
 
               <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, j) => (
-                  <li key={j} className="flex items-start gap-3">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-3">
                     <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-300">{feature}</span>
                   </li>
@@ -120,7 +118,7 @@ export default function Pricing() {
           <p className="text-gray-400 mb-4">
             Need more? Enterprise plans available for large teams.
           </p>
-          
+          <a
             href="mailto:enterprise@seoscribe.pro"
             className="text-primary-400 hover:text-primary-300 font-medium"
           >
