@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, Trash2, Download, Share2, Clock, TrendingUp } from 'lucide-react'
+import { FileText, Trash2, Download, Share2, Clock, TrendingUp, Sparkles } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
@@ -11,7 +11,7 @@ export default function OutputList({ articles, onRefresh }) {
 
   async function handleDelete(id) {
     if (!confirm('Delete this article?')) return
-    
+
     setDeleting(id)
     try {
       await api.deleteArticle(id)
@@ -24,7 +24,7 @@ export default function OutputList({ articles, onRefresh }) {
     }
   }
 
-  if (articles.length === 0) {
+  if (!articles || articles.length === 0) {
     return (
       <div className="glass-card p-12 text-center">
         <FileText className="w-16 h-16 text-gray-600 mx-auto mb-4" />
@@ -47,7 +47,19 @@ export default function OutputList({ articles, onRefresh }) {
           className="glass-card p-6 hover:bg-white/10 transition-all cursor-pointer"
           onClick={() => navigate(`/articles/${article.id}`)}
         >
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex gap-4">
+            {/* Hero Image Thumbnail */}
+            {article?.data?.image?.image_url && (
+              <div className="w-32 h-24 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0">
+                <img
+                  src={article.data.image.image_url}
+                  alt={article.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {/* Article Info */}
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-bold mb-2 truncate">
                 {article.title}
@@ -61,7 +73,7 @@ export default function OutputList({ articles, onRefresh }) {
                   <FileText className="w-4 h-4" />
                   <span>{article.word_count} words</span>
                 </div>
-                {article.seo_score && (
+                {article.seo_score != null && (
                   <div className="flex items-center gap-1">
                     <TrendingUp className="w-4 h-4" />
                     <span className={article.seo_score >= 80 ? 'text-green-400' : 'text-yellow-400'}>
@@ -69,10 +81,17 @@ export default function OutputList({ articles, onRefresh }) {
                     </span>
                   </div>
                 )}
+                {article?.data?.image && (
+                  <div className="flex items-center gap-1 text-primary-400">
+                    <Sparkles className="w-4 h-4" />
+                    <span>AI Image</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Actions */}
+            <div className="flex items-start gap-2 ml-auto">
               <button
                 onClick={(e) => {
                   e.stopPropagation()
