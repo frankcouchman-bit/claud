@@ -4,10 +4,11 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-gray-700;
   }
   body {
     @apply bg-gray-950 text-gray-100 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
@@ -22,12 +23,13 @@
   .btn-primary {
     @apply bg-gradient-primary text-white font-semibold py-3 px-8 rounded-xl 
            hover:shadow-2xl hover:shadow-primary-500/50 transition-all duration-300
-           hover:scale-105 active:scale-95;
+           hover:scale-105 active:scale-95 inline-flex items-center justify-center;
   }
   
   .btn-ghost {
     @apply border-2 border-white/20 text-white font-semibold py-3 px-8 rounded-xl
-           hover:bg-white/10 hover:border-white/40 transition-all duration-300;
+           hover:bg-white/10 hover:border-white/40 transition-all duration-300
+           inline-flex items-center justify-center;
   }
   
   .container-custom {
@@ -43,15 +45,6 @@
   .text-gradient {
     @apply bg-gradient-to-r from-primary-400 via-accent-500 to-primary-600 
            bg-clip-text text-transparent;
-  }
-  
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
   }
 }
 
@@ -85,4 +78,13 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Ensure dark background on all pages */
+html {
+  @apply bg-gray-950;
+}
+
+#root {
+  @apply min-h-screen bg-gray-950;
 }
