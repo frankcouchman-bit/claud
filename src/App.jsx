@@ -32,13 +32,13 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
-          
-          {/* Protected Routes */}
+
+          {/* Protected-ish Routes (wrapped by your dashboard layout / guard) */}
           <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
           <Route path="/articles" element={<DashboardLayout><Articles /></DashboardLayout>} />
           <Route path="/tools" element={<DashboardLayout><Tools /></DashboardLayout>} />
           <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
-          
+
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
