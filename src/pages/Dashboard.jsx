@@ -20,6 +20,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     loadData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function loadData() {
@@ -28,7 +29,7 @@ export default function Dashboard() {
         api.getArticles(),
         refreshUser()
       ])
-      setArticles(articlesData)
+      setArticles(articlesData || [])
     } catch (error) {
       toast.error('Failed to load dashboard')
     } finally {
@@ -42,13 +43,12 @@ export default function Dashboard() {
       return
     }
 
-    // Check quota
-    if (!isPro && user.usage?.today?.generations >= 1) {
+    // Quotas
+    if (!isPro && (user.usage?.today?.generations ?? 0) >= 1) {
       toast.error('Daily limit reached. Upgrade to Pro for 15 articles/day!')
       return
     }
-
-    if (isPro && user.usage?.today?.generations >= 15) {
+    if (isPro && (user.usage?.today?.generations ?? 0) >= 15) {
       toast.error('Daily limit reached (15/day). Resets tomorrow.')
       return
     }
@@ -59,7 +59,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="spinner"></div>
+        <div className="spinner" />
       </div>
     )
   }
@@ -84,7 +84,7 @@ export default function Dashboard() {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handleGenerateArticle}
-        disabled={generating || (!isPro && user?.usage?.today?.generations >= 1)}
+        disabled={generating || (!isPro && (user?.usage?.today?.generations ?? 0) >= 1)}
         className="w-full md:w-auto btn-primary text-lg mb-8 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Plus className="w-5 h-5 mr-2" />
@@ -107,7 +107,7 @@ export default function Dashboard() {
             <Zap className="w-5 h-5 text-accent-400" />
           </div>
           <div className="text-2xl font-bold mb-1">
-            {user?.usage?.today?.generations || 0}/{isPro ? 15 : 1}
+            {(user?.usage?.today?.generations ?? 0)}/{isPro ? 15 : 1}
           </div>
           <div className="text-sm text-gray-400">Today's Usage</div>
         </div>
@@ -127,8 +127,10 @@ export default function Dashboard() {
             <TrendingUp className="w-5 h-5 text-green-400" />
           </div>
           <div className="text-2xl font-bold mb-1">
-            {articles.length > 0 
-              ? Math.round(articles.reduce((sum, a) => sum + (a.seo_score || 0), 0) / articles.length)
+            {articles.length > 0
+              ? Math.round(
+                  articles.reduce((sum, a) => sum + (a.seo_score || 0), 0) / articles.length
+                )
               : 0}
           </div>
           <div className="text-sm text-gray-400">Avg SEO Score</div>
