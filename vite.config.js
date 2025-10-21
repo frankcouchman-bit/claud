@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src')
-    }
+      '@': resolve(__dirname, 'src'),
+    },
   },
   css: {
     postcss: './postcss.config.js',
@@ -15,19 +15,20 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
-    minify: 'terser',
+    // Use esbuild so Vite doesn't try to load Terser
+    minify: 'esbuild',
     rollupOptions: {
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
           motion: ['framer-motion'],
-          charts: ['recharts']
-        }
-      }
-    }
+          charts: ['recharts'],
+        },
+      },
+    },
   },
   server: {
     port: 5173,
-    open: true
-  }
+    open: true,
+  },
 })
