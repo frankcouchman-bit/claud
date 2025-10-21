@@ -1,67 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  />
-  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
   <title>SEOScribe - AI-Powered Article Writer & SEO Content Generator</title>
   <meta name="description" content="Generate SEO-optimized articles in minutes with SEOScribe's AI article writer. Create professional content with built-in SEO tools, research, and citations.">
-
+  
   <!-- Preconnect for performance -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <!-- Open Graph -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="SEOScribe - AI Article Writer & SEO Content Generator" />
-  <meta property="og:description" content="Generate SEO-optimized articles in minutes with AI-powered writing tools and built-in research." />
-  <meta property="og:image" content="/og-image.png" />
-  <meta property="og:url" content="https://seoscribe.pro" />
-
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SEOScribe - AI Article Writer & SEO Content Generator">
+  <meta property="og:description" content="Generate SEO-optimized articles in minutes with AI-powered writing tools and built-in research.">
+  <meta property="og:url" content="https://seoscribe.pro">
+  
   <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="SEOScribe - AI Article Writer" />
-  <meta name="twitter:description" content="Generate SEO-optimized articles in minutes with AI-powered writing tools." />
-  <meta name="twitter:image" content="/og-image.png" />
-
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SEOScribe - AI Article Writer">
+  <meta name="twitter:description" content="Generate SEO-optimized articles in minutes with AI-powered writing tools.">
+  
   <!-- Canonical -->
-  <link rel="canonical" href="https://seoscribe.pro/" />
-
-  <!-- Show any runtime error instead of a blank page -->
-  <script>
-    (function () {
-      function show(msg) {
-        var el = document.createElement('pre');
-        el.style.cssText =
-          'white-space:pre-wrap;padding:16px;margin:0;background:#0b0f1a;color:#ff6b6b;font-family:ui-monospace,Menlo,monospace;font-size:14px;';
-        el.textContent = 'Runtime error:\n' + msg;
-        document.body.innerHTML = '';
-        document.body.appendChild(el);
-      }
-      window.addEventListener('error', function (e) {
-        show((e.error && (e.error.stack || e.error.message)) || e.message || String(e));
-      });
-      window.addEventListener('unhandledrejection', function (e) {
-        var r = e.reason;
-        show((r && (r.stack || r.message)) || String(r));
-      });
-    })();
-  </script>
+  <link rel="canonical" href="https://seoscribe.pro/">
+  
+  <style>
+    /* Loading spinner for initial load */
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: #0a0e27;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .spinner {
+      border: 3px solid rgba(122, 90, 248, 0.1);
+      border-top-color: #7a5af8;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-  <noscript>
-    <strong>SEOScribe requires JavaScript to run.</strong>
-  </noscript>
-
+  <div id="loading">
+    <div class="spinner"></div>
+  </div>
   <div id="root"></div>
-
-  <!-- IMPORTANT: source entry; Vite will replace this with hashed assets in dist/ -->
   <script type="module" src="/src/main.jsx"></script>
-
+  
+  <script>
+    // Remove loading spinner once React loads
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.style.opacity = '0';
+          loading.style.transition = 'opacity 0.3s';
+          setTimeout(() => loading.remove(), 300);
+        }
+      }, 500);
+    });
+  </script>
+  
   <!-- Structured Data -->
   <script type="application/ld+json">
   {
@@ -83,21 +92,17 @@
     "description": "AI-powered article writer and SEO content generator for professional content creation."
   }
   </script>
-
+  
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Organization",
     "name": "SEOScribe",
     "url": "https://seoscribe.pro",
-    "logo": "https://seoscribe.pro/logo.svg",
-    "sameAs": [
-      "https://twitter.com/seoscribe",
-      "https://linkedin.com/company/seoscribe"
-    ]
+    "logo": "https://seoscribe.pro/logo.svg"
   }
   </script>
-
+  
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
