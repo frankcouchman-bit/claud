@@ -14,6 +14,28 @@ export function AuthProvider({ children }) {
     initAuth()
   }, [])
 
+  // Refresh user automatically after Stripe redirects back (?upgrade=success)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const upgradeSuccess = params.get('upgrade') === 'success'
+    const expectingUpgrade = sessionStorage.getItem('expectingUpgrade') === '1'
+
+    if (upgradeSuccess || expectingUpgrade) {
+      // Re-fetch the profile to get updated plan/quotas
+      ;(async () => {
+        try {
+          await loadUser()
+        } finally {
+          // Clean URL & clear the flag no matter what
+          const cleanPath = location.pathname
+          window.history.replaceState({}, '', cleanPath)
+          sessionStorage.removeItem('expectingUpgrade')
+        }
+      })()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search])
+
   async function initAuth() {
     try {
       // Check for tokens in URL (OAuth callback)
@@ -24,13 +46,13 @@ export function AuthProvider({ children }) {
       if (accessToken) {
         localStorage.setItem('access_token', accessToken)
         if (refreshToken) localStorage.setItem('refresh_token', refreshToken)
-        
+
         // Clean URL
         window.history.replaceState({}, '', window.location.pathname)
-        
+
         // Fetch profile
         await loadUser()
-        
+
         // Redirect to dashboard if on callback page
         if (location.pathname === '/login' || location.pathname === '/signup') {
           navigate('/dashboard')
@@ -78,11 +100,17 @@ export function AuthProvider({ children }) {
     navigate('/login')
   }
 
+  // ✅ Upgrade flow that refreshes user data when they return from Stripe
   async function upgradeToPro() {
     try {
       const successUrl = `${window.location.origin}/dashboard?upgrade=success`
-      const cancelUrl = `${window.location.origin}/dashboard`
+      const cancelUrl  = `${window.location.origin}/dashboard`
       const { url } = await api.createCheckoutSession(successUrl, cancelUrl)
+
+      // Mark that we expect an upgraded state when we come back
+      sessionStorage.setItem('expectingUpgrade', '1')
+
+      // Redirect to Stripe Checkout
       window.location.href = url
     } catch (error) {
       console.error('Upgrade error:', error)
