@@ -10,6 +10,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import Articles from './pages/Articles'
+import ArticleView from './pages/ArticleView' // ✅ added
 import Tools from './pages/Tools'
 import Settings from './pages/Settings'
 import PrivacyPolicy from './pages/PrivacyPolicy'
@@ -32,17 +33,18 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
-          
+
           {/* Protected Routes */}
           <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
           <Route path="/articles" element={<DashboardLayout><Articles /></DashboardLayout>} />
+          <Route path="/articles/:id" element={<DashboardLayout><ArticleView /></DashboardLayout>} /> {/* ✅ added */}
           <Route path="/tools" element={<DashboardLayout><Tools /></DashboardLayout>} />
           <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
-          
+
           {/* 404 */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <Toaster 
+        <Toaster
           position="top-right"
           toastOptions={{
             duration: 4000,
