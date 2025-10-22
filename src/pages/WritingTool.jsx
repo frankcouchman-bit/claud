@@ -44,7 +44,7 @@ export default function WritingTool() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-6">
                 <Shield className="w-4 h-4 text-accent-400" />
-                <span className="text-sm font-medium">Enterprise-Grade Writing Tool</span>
+                <span className="text-sm font-medium text-gray-200">Enterprise-Grade Writing Tool</span>
               </div>
 
               <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
@@ -52,7 +52,7 @@ export default function WritingTool() {
                 <br />for Content Creators
               </h1>
 
-              <p className="text-xl text-gray-300 mb-8">
+              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
                 From idea to published article in minutes with our all-in-one writing tool. Research, write, optimize, and publish professional content faster than ever.
               </p>
 
@@ -74,16 +74,17 @@ export default function WritingTool() {
             </motion.div>
           </div>
 
-          {/* Interactive Demo Preview */}
+          {/* Fixed Interactive Demo Preview with Visible Content */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="max-w-5xl mx-auto"
           >
-            <div className="glass-card p-4 rounded-2xl">
-              <div className="bg-gray-900 rounded-xl overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800">
+            <div className="glass-card p-4 rounded-2xl border border-white/10">
+              <div className="bg-gray-900 rounded-xl overflow-hidden border border-gray-800">
+                {/* Browser Chrome */}
+                <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-gray-900/50">
                   <div className="flex gap-2">
                     <div className="w-3 h-3 rounded-full bg-red-500"></div>
                     <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
@@ -91,15 +92,46 @@ export default function WritingTool() {
                   </div>
                   <div className="text-sm text-gray-500 ml-4">SEOScribe Writing Tool</div>
                 </div>
-                <div className="p-8 space-y-4">
-                  <div className="h-6 bg-gradient-primary rounded w-2/3 animate-pulse"></div>
-                  <div className="h-4 bg-gray-700 rounded w-full"></div>
-                  <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-                  <div className="h-4 bg-gray-700 rounded w-4/5"></div>
-                  <div className="grid grid-cols-3 gap-4 mt-8">
-                    <div className="h-24 bg-gray-800 rounded-lg"></div>
-                    <div className="h-24 bg-gray-800 rounded-lg"></div>
-                    <div className="h-24 bg-gray-800 rounded-lg"></div>
+
+                {/* Content Area with Visible Elements */}
+                <div className="p-8 space-y-6">
+                  {/* Title Section */}
+                  <div className="space-y-3">
+                    <div className="h-8 bg-gradient-primary rounded-lg w-2/3"></div>
+                    <div className="h-3 bg-gray-700 rounded w-full"></div>
+                    <div className="h-3 bg-gray-700 rounded w-5/6"></div>
+                  </div>
+
+                  {/* Tool Cards with Labels */}
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { label: 'SEO Score', value: '92/100', color: 'text-green-400' },
+                      { label: 'Readability', value: 'Excellent', color: 'text-blue-400' },
+                      { label: 'Words', value: '3,247', color: 'text-purple-400' },
+                    ].map((item, i) => (
+                      <div key={i} className="p-4 bg-gray-800/80 rounded-lg border border-gray-700 text-center">
+                        <div className={`text-2xl font-bold ${item.color} mb-1`}>{item.value}</div>
+                        <div className="text-xs text-gray-400">{item.label}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Research Section with Content */}
+                  <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">
+                        <Search className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-white">Researching topic...</div>
+                        <div className="text-xs text-gray-400">Found 10 sources</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-2 bg-gray-700 rounded w-full"></div>
+                      <div className="h-2 bg-gray-700 rounded w-4/5"></div>
+                      <div className="h-2 bg-gray-700 rounded w-3/4"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -108,7 +140,7 @@ export default function WritingTool() {
         </div>
       </section>
 
-      {/* Feature Spotlight */}
+      {/* Feature Spotlight - Research */}
       <section className="section-padding">
         <div className="container-custom">
           <div className="grid lg:grid-cols-2 gap-16 items-center mb-24">
@@ -119,12 +151,12 @@ export default function WritingTool() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-6">
                 <Search className="w-4 h-4 text-accent-400" />
-                <span className="text-sm font-medium">Research Assistant</span>
+                <span className="text-sm font-medium text-gray-200">Research Assistant</span>
               </div>
               <h2 className="text-4xl font-bold mb-4">
                 Built-in <span className="text-gradient">Research</span>
               </h2>
-              <p className="text-xl text-gray-400 mb-6">
+              <p className="text-xl text-gray-400 mb-6 leading-relaxed">
                 Our writing tool automatically researches your topic, analyzes top-ranking content, and suggests data-backed insights to strengthen your articles.
               </p>
               <ul className="space-y-3">
@@ -142,50 +174,66 @@ export default function WritingTool() {
               </ul>
             </motion.div>
 
+            {/* Fixed Research Card with Visible Content */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="glass-card p-8"
+              className="glass-card p-8 border border-white/10"
             >
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-4 bg-gray-800 rounded-lg">
-                  <div className="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center">
-                    <Search className="w-5 h-5" />
+                <div className="flex items-center gap-3 p-4 bg-gray-800/80 rounded-lg border border-gray-700">
+                  <div className="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center flex-shrink-0">
+                    <Search className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-medium">Researching topic...</div>
+                    <div className="text-sm font-medium text-white">Researching topic...</div>
                     <div className="text-xs text-gray-400">Found 10 sources</div>
                   </div>
                 </div>
-                <div className="h-32 bg-gray-800 rounded-lg p-4">
-                  <div className="h-2 bg-gray-700 rounded w-full mb-2"></div>
-                  <div className="h-2 bg-gray-700 rounded w-5/6 mb-2"></div>
-                  <div className="h-2 bg-gray-700 rounded w-4/5"></div>
+                <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                  <div className="space-y-2">
+                    <div className="h-2 bg-gray-700 rounded w-full"></div>
+                    <div className="h-2 bg-gray-700 rounded w-5/6"></div>
+                    <div className="h-2 bg-gray-700 rounded w-4/5"></div>
+                    <div className="h-2 bg-gray-700 rounded w-full"></div>
+                    <div className="h-2 bg-gray-700 rounded w-3/4"></div>
+                  </div>
                 </div>
               </div>
             </motion.div>
           </div>
 
+          {/* Feature Spotlight - SEO */}
           <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Fixed SEO Card with Visible Labels */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="order-2 lg:order-1 glass-card p-8"
+              className="order-2 lg:order-1 glass-card p-8 border border-white/10"
             >
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg">
-                  <span className="text-sm">SEO Score</span>
+                <div className="flex items-center justify-between p-4 bg-gray-800/80 rounded-lg border border-gray-700">
+                  <span className="text-sm text-gray-300 font-medium">SEO Score</span>
                   <span className="text-2xl font-bold text-green-400">92/100</span>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
+                <div className="space-y-2 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                  <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-400">Readability</span>
-                    <span className="text-green-400">Excellent</span>
+                    <span className="text-green-400 font-medium">Excellent</span>
                   </div>
-                  <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-400 w-5/6"></div>
+                  <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-green-400 w-5/6 rounded-full"></div>
+                  </div>
+                </div>
+                <div className="space-y-2 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-400">Keyword Density</span>
+                    <span className="text-blue-400 font-medium">Optimal</span>
+                  </div>
+                  <div className="h-3 bg-gray-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-400 w-4/5 rounded-full"></div>
                   </div>
                 </div>
               </div>
@@ -199,12 +247,12 @@ export default function WritingTool() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-6">
                 <Target className="w-4 h-4 text-accent-400" />
-                <span className="text-sm font-medium">SEO Optimizer</span>
+                <span className="text-sm font-medium text-gray-200">SEO Optimizer</span>
               </div>
               <h2 className="text-4xl font-bold mb-4">
                 Real-time <span className="text-gradient">SEO Analysis</span>
               </h2>
-              <p className="text-xl text-gray-400 mb-6">
+              <p className="text-xl text-gray-400 mb-6 leading-relaxed">
                 Get instant SEO feedback as you write. Our content generator analyzes readability, keyword density, and provides actionable recommendations.
               </p>
               <ul className="space-y-3">
@@ -240,9 +288,9 @@ export default function WritingTool() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-gray-800">
-                    <th className="text-left p-4">Feature</th>
-                    <th className="text-center p-4">SEOScribe</th>
-                    <th className="text-center p-4">Others</th>
+                    <th className="text-left p-4 text-white font-bold">Feature</th>
+                    <th className="text-center p-4 text-white font-bold">SEOScribe</th>
+                    <th className="text-center p-4 text-white font-bold">Others</th>
                   </tr>
                 </thead>
                 <tbody>
