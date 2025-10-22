@@ -18,13 +18,13 @@ export default function Footer() {
               Professional AI article writer and SEO content generator for modern content creators.
             </p>
             <div className="flex gap-4">
-              <a href="https://twitter.com/seoscribe" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://twitter.com/seoscribepro" className="text-gray-400 hover:text-white transition-colors">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="https://linkedin.com/company/seoscribe" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://www.linkedin.com/in/seo-scribe-834a7a38b/" className="text-gray-400 hover:text-white transition-colors">
                 <Linkedin className="w-5 h-5" />
               </a>
-              <a href="https://github.com/seoscribe" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://github.com/ className="text-gray-400 hover:text-white transition-colors">
                 <Github className="w-5 h-5" />
               </a>
             </div>
