@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, TrendingUp, FileText, Clock, Zap } from 'lucide-react'
 import { useAuth } from '../lib/auth'
@@ -14,14 +14,29 @@ import toast from 'react-hot-toast'
 export default function Dashboard() {
   const { user, isPro, refreshUser } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
     loadData()
+
+    // ✅ Handle Stripe return (?upgrade=success): wait briefly for webhook, then refresh
+    const upgradeStatus = searchParams.get('upgrade')
+    if (upgradeStatus === 'success') {
+      setTimeout(async () => {
+        try {
+          await refreshUser()
+          toast.success('🎉 Welcome to Pro! You now have 15 articles per day.')
+        } finally {
+          // Clean query params
+          setSearchParams({})
+        }
+      }, 2000)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, []) // run once on mount
 
   async function loadData() {
     try {
