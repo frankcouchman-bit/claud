@@ -7,110 +7,102 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
   const location = useLocation()
 
   useEffect(() => {
     initAuth()
-  }, [])
-
-  // Refresh user automatically after Stripe redirects back (?upgrade=success)
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    const upgradeSuccess = params.get('upgrade') === 'success'
-    const expectingUpgrade = sessionStorage.getItem('expectingUpgrade') === '1'
-
-    if (upgradeSuccess || expectingUpgrade) {
-      // Re-fetch the profile to get updated plan/quotas
-      ;(async () => {
-        try {
-          await loadUser()
-        } finally {
-          // Clean URL & clear the flag no matter what
-          const cleanPath = location.pathname
-          window.history.replaceState({}, '', cleanPath)
-          sessionStorage.removeItem('expectingUpgrade')
-        }
-      })()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search])
+  }, [location.search]) // Re-run when URL params change
 
   async function initAuth() {
     try {
-      // Check for tokens in URL (OAuth callback)
+      // Check for tokens in URL first (OAuth/Magic Link callback)
       const params = new URLSearchParams(window.location.search)
       const accessToken = params.get('access_token')
       const refreshToken = params.get('refresh_token')
+      const errorParam = params.get('error')
 
+      // Handle errors
+      if (errorParam) {
+        console.error('Auth error:', errorParam)
+        setLoading(false)
+        return
+      }
+
+      // If we have tokens in URL, save them
       if (accessToken) {
+        console.log('✅ Tokens found in URL, saving...')
         localStorage.setItem('access_token', accessToken)
-        if (refreshToken) localStorage.setItem('refresh_token', refreshToken)
-
-        // Clean URL
-        window.history.replaceState({}, '', window.location.pathname)
-
-        // Fetch profile
+        if (refreshToken) {
+          localStorage.setItem('refresh_token', refreshToken)
+        }
+        
+        // Clean URL immediately
+        const cleanUrl = window.location.pathname
+        window.history.replaceState({}, '', cleanUrl)
+        
+        // Load user with the new token
         await loadUser()
+        return
+      }
 
-        // Redirect to dashboard if on callback page
-        if (location.pathname === '/login' || location.pathname === '/signup') {
-          navigate('/dashboard')
-        }
+      // Check for existing token in localStorage
+      const existingToken = localStorage.getItem('access_token')
+      if (existingToken) {
+        console.log('✅ Found existing token, loading user...')
+        await loadUser()
       } else {
-        // Check existing token
-        const token = localStorage.getItem('access_token')
-        if (token) {
-          await loadUser()
-        }
+        console.log('ℹ️ No auth token found')
+        setLoading(false)
       }
     } catch (error) {
       console.error('Auth initialization error:', error)
-    } finally {
       setLoading(false)
     }
   }
 
   async function loadUser() {
     try {
+      console.log('📡 Loading user profile...')
       const profile = await api.getProfile()
+      console.log('✅ User loaded:', profile)
       setUser(profile)
     } catch (error) {
-      console.error('Failed to load user:', error)
-      // Clear invalid token
+      console.error('❌ Failed to load user:', error)
+      // Token might be invalid, clear it
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
+      setUser(null)
+    } finally {
+      setLoading(false)
     }
   }
 
   async function loginWithGoogle() {
     const redirect = `${window.location.origin}/dashboard`
-    window.location.href = `${api.baseUrl}/auth/google?redirect=${encodeURIComponent(redirect)}`
+    const authUrl = `${api.baseUrl}/auth/google?redirect=${encodeURIComponent(redirect)}`
+    console.log('🔗 Redirecting to Google OAuth:', authUrl)
+    window.location.href = authUrl
   }
 
   async function loginWithMagicLink(email) {
     const redirect = `${window.location.origin}/dashboard`
+    console.log('📧 Sending magic link to:', email)
     await api.sendMagicLink(email, redirect)
   }
 
   function logout() {
+    console.log('👋 Logging out...')
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     setUser(null)
-    navigate('/login')
+    window.location.href = '/login'
   }
 
-  // ✅ Upgrade flow that refreshes user data when they return from Stripe
   async function upgradeToPro() {
     try {
       const successUrl = `${window.location.origin}/dashboard?upgrade=success`
-      const cancelUrl  = `${window.location.origin}/dashboard`
+      const cancelUrl = `${window.location.origin}/dashboard`
       const { url } = await api.createCheckoutSession(successUrl, cancelUrl)
-
-      // Mark that we expect an upgraded state when we come back
-      sessionStorage.setItem('expectingUpgrade', '1')
-
-      // Redirect to Stripe Checkout
       window.location.href = url
     } catch (error) {
       console.error('Upgrade error:', error)
