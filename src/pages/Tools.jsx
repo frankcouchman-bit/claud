@@ -15,7 +15,7 @@ export default function Tools() {
   const [showNewModal, setShowNewModal] = useState(false)
   const [busy, setBusy] = useState(false)
   const mounted = useRef(true)
-  const openedFromQuery = useRef(false) // ⬅️ ensures we only open once per visit
+  const openedFromQuery = useRef(false) // ensures we only open once per visit
 
   useEffect(() => {
     mounted.current = true
@@ -27,7 +27,7 @@ export default function Tools() {
     if (action === 'generate' && !busy && !openedFromQuery.current) {
       openedFromQuery.current = true
       setShowNewModal(true)
-      // ⬇️ Clear the query so the modal doesn’t re-open on rerender/back
+      // Clear the query so the modal doesn’t re-open on rerender/back
       const next = new URLSearchParams(searchParams)
       next.delete('action')
       setSearchParams(next, { replace: true })
@@ -45,7 +45,7 @@ export default function Tools() {
     )
   }
 
-  // ⬇️ NEW: fallback helper — get the newest article id from the list
+  // Fallback: get the newest article id from the list
   async function fetchNewestArticleId() {
     try {
       const list = await api.getArticles()
@@ -114,17 +114,15 @@ export default function Tools() {
       const result = await api.generateDraft(payload)
       let id = normalizeArticleId(result)
 
-      // ⬇️ Immediately refresh profile so quota UI updates everywhere
+      // Immediately refresh profile so quota UI updates everywhere
       await refreshProfileSoft()
 
-      // ⬇️ PATCH: if backend didn’t return an ID, open the newest article
-      if (!id) {
-        id = await fetchNewestArticleId()
-      }
+      // If backend didn’t return an ID, open the newest article
+      if (!id) id = await fetchNewestArticleId()
 
       toast.success('Article generated!', { id: toastId })
       setShowNewModal(false)
-      navigate(id ? `/articles/${id}` : '/articles?open=newest`)
+      navigate(id ? `/articles/${id}` : '/articles?open=newest')
     } catch (error) {
       const status = error?.status
       const msg = error?.data?.error || error?.data?.message || error?.message || 'Failed to generate'
