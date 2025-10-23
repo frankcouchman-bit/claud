@@ -1,26 +1,29 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Search, Filter } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@/lib/api'
 import OutputList from '@/components/dashboard/OutputList'
 import toast from 'react-hot-toast'
 
 export default function Articles() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const autoOpened = useRef(false) // avoid re-entrancy
 
   useEffect(() => {
     loadArticles()
   }, [])
 
   async function loadArticles() {
+    setLoading(true)
     try {
       const data = await api.getArticles()
-      setArticles(data)
+      setArticles(Array.isArray(data) ? data : [])
     } catch (error) {
       toast.error('Failed to load articles')
     } finally {
@@ -28,11 +31,48 @@ export default function Articles() {
     }
   }
 
-  const filteredArticles = articles.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesFilter = filterStatus === 'all' || article.status === filterStatus
-    return matchesSearch && matchesFilter
-  })
+  // -------- helpers --------
+  function getId(a) {
+    return a?.id || a?.article_id || a?.uuid || a?.data?.id || null
+  }
+  function getCreatedAt(a) {
+    return new Date(a?.created_at || a?.createdAt || 0).getTime()
+  }
+  const newestArticle = useMemo(() => {
+    if (!Array.isArray(articles) || articles.length === 0) return null
+    const sorted = [...articles].sort((a, b) => getCreatedAt(b) - getCreatedAt(a))
+    return sorted[0] || null
+  }, [articles])
+
+  // Auto-open newest article when appropriate
+  useEffect(() => {
+    if (autoOpened.current) return
+    if (loading) return
+    if (!articles || articles.length === 0) return
+
+    const openNewestParam = (searchParams.get('open') || '').toLowerCase() === 'newest'
+    const noFiltersActive = !searchTerm && filterStatus === 'all'
+
+    if (openNewestParam || noFiltersActive) {
+      const id = getId(newestArticle)
+      if (id) {
+        autoOpened.current = true
+        navigate(`/articles/${id}`, { replace: true })
+      }
+    }
+  }, [loading, articles, searchParams, searchTerm, filterStatus, newestArticle, navigate])
+
+  // Robust filtering (tolerate missing title/status)
+  const filteredArticles = useMemo(() => {
+    const q = (searchTerm || '').toLowerCase()
+    return (articles || []).filter((article) => {
+      const title = (article?.title || article?.data?.title || article?.topic || '').toLowerCase()
+      const status = (article?.status || 'draft').toLowerCase()
+      const matchesSearch = !q || title.includes(q)
+      const matchesFilter = filterStatus === 'all' || status === filterStatus
+      return matchesSearch && matchesFilter
+    })
+  }, [articles, searchTerm, filterStatus])
 
   if (loading) {
     return (
@@ -88,7 +128,7 @@ export default function Articles() {
       {filteredArticles.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <p className="text-gray-400">
-            {searchTerm || filterStatus !== 'all' 
+            {searchTerm || filterStatus !== 'all'
               ? 'No articles match your filters'
               : 'No articles yet. Create your first one!'}
           </p>
