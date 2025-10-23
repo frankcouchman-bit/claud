@@ -45,6 +45,29 @@ export default function Tools() {
     )
   }
 
+  // ⬇️ NEW: fallback helper — get the newest article id from the list
+  async function fetchNewestArticleId() {
+    try {
+      const list = await api.getArticles()
+      if (!Array.isArray(list) || list.length === 0) return null
+      const sorted = [...list].sort((a, b) => {
+        const da = new Date(a?.created_at || a?.createdAt || 0).getTime()
+        const db = new Date(b?.created_at || b?.createdAt || 0).getTime()
+        return db - da
+      })
+      const newest = sorted[0]
+      return (
+        newest?.id ||
+        newest?.article_id ||
+        newest?.uuid ||
+        newest?.data?.id ||
+        null
+      )
+    } catch {
+      return null
+    }
+  }
+
   async function refreshProfileSoft() {
     try {
       if (typeof loadUser === 'function') {
@@ -89,14 +112,19 @@ export default function Tools() {
       }
 
       const result = await api.generateDraft(payload)
-      const id = normalizeArticleId(result)
+      let id = normalizeArticleId(result)
 
       // ⬇️ Immediately refresh profile so quota UI updates everywhere
       await refreshProfileSoft()
 
+      // ⬇️ PATCH: if backend didn’t return an ID, open the newest article
+      if (!id) {
+        id = await fetchNewestArticleId()
+      }
+
       toast.success('Article generated!', { id: toastId })
       setShowNewModal(false)
-      navigate(id ? `/articles/${id}` : '/articles')
+      navigate(id ? `/articles/${id}` : '/articles?open=newest`)
     } catch (error) {
       const status = error?.status
       const msg = error?.data?.error || error?.data?.message || error?.message || 'Failed to generate'
