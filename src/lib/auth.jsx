@@ -11,37 +11,65 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     initAuth()
-  }, [location.search]) // Re-run when URL params change
+  }, [location.pathname, location.search, location.hash])
 
   async function initAuth() {
     try {
-      // Check for tokens in URL first (OAuth/Magic Link callback)
-      const params = new URLSearchParams(window.location.search)
-      const accessToken = params.get('access_token')
-      const refreshToken = params.get('refresh_token')
-      const errorParam = params.get('error')
+      let accessToken = null
+      let refreshToken = null
+      let errorParam = null
+
+      // ✅ Check URL HASH first (Supabase OAuth returns tokens in hash)
+      if (window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        accessToken = hashParams.get('access_token')
+        refreshToken = hashParams.get('refresh_token')
+        errorParam = hashParams.get('error')
+        
+        console.log('🔍 Checking hash params:', {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          error: errorParam
+        })
+      }
+
+      // ✅ Also check query params (magic links use query params)
+      if (!accessToken) {
+        const queryParams = new URLSearchParams(window.location.search)
+        accessToken = queryParams.get('access_token')
+        refreshToken = queryParams.get('refresh_token')
+        errorParam = queryParams.get('error')
+        
+        console.log('🔍 Checking query params:', {
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken,
+          error: errorParam
+        })
+      }
 
       // Handle errors
       if (errorParam) {
-        console.error('Auth error:', errorParam)
+        console.error('❌ Auth error:', errorParam)
         setLoading(false)
         return
       }
 
-      // If we have tokens in URL, save them
+      // If we have tokens in URL, save them and redirect
       if (accessToken) {
-        console.log('✅ Tokens found in URL, saving...')
+        console.log('✅ Tokens found, saving and loading user...')
         localStorage.setItem('access_token', accessToken)
         if (refreshToken) {
           localStorage.setItem('refresh_token', refreshToken)
         }
         
-        // Clean URL immediately
-        const cleanUrl = window.location.pathname
-        window.history.replaceState({}, '', cleanUrl)
+        // Clean URL completely (remove hash and query params)
+        window.history.replaceState({}, '', '/dashboard')
         
-        // Load user with the new token
+        // Load user profile
         await loadUser()
+        
+        // Force navigation to dashboard
+        window.location.href = '/dashboard'
         return
       }
 
@@ -55,7 +83,7 @@ export function AuthProvider({ children }) {
         setLoading(false)
       }
     } catch (error) {
-      console.error('Auth initialization error:', error)
+      console.error('❌ Auth initialization error:', error)
       setLoading(false)
     }
   }
@@ -68,7 +96,6 @@ export function AuthProvider({ children }) {
       setUser(profile)
     } catch (error) {
       console.error('❌ Failed to load user:', error)
-      // Token might be invalid, clear it
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
       setUser(null)
@@ -105,7 +132,7 @@ export function AuthProvider({ children }) {
       const { url } = await api.createCheckoutSession(successUrl, cancelUrl)
       window.location.href = url
     } catch (error) {
-      console.error('Upgrade error:', error)
+      console.error('❌ Upgrade error:', error)
     }
   }
 
