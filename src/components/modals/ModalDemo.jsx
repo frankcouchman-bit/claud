@@ -4,7 +4,7 @@ import { X, Sparkles, ArrowRight } from 'lucide-react'
 import { api } from '@/lib/api'
 import toast from 'react-hot-toast'
 
-export default function ModalDemo({ onClose, onSuccess, onSignupPrompt }) {
+export default function ModalDemo({ onClose, onSuccess, onError, onSignupPrompt }) {
   const [topic, setTopic] = useState('')
   const [generating, setGenerating] = useState(false)
 
@@ -27,15 +27,18 @@ export default function ModalDemo({ onClose, onSuccess, onSignupPrompt }) {
       toast.success('Demo article generated!')
       onSuccess(result)
       
-      // Prompt to sign up after 5 seconds
-      setTimeout(() => {
-        onSignupPrompt()
-      }, 5000)
-      
     } catch (error) {
-      if (error.message.includes('Demo limit reached') || error.message.includes('demo')) {
+      console.error('❌ Demo generation failed:', error)
+      
+      // ✅ Pass error to parent to handle quota enforcement
+      if (error.message && (
+        error.message.includes('Demo limit') || 
+        error.message.includes('demo') ||
+        error.message.includes('Quota')
+      )) {
         toast.error('Demo limit reached. Sign up for free to continue!')
-        setTimeout(() => onSignupPrompt(), 2000)
+        onError(error)
+        onClose()
       } else {
         toast.error('Failed to generate demo. Please try again.')
       }
@@ -88,7 +91,7 @@ export default function ModalDemo({ onClose, onSuccess, onSignupPrompt }) {
               type="text"
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+              onKeyDown={(e) => e.key === 'Enter' && !generating && handleGenerate()}
               placeholder="e.g., 'The Future of AI in Healthcare' or 'Best Marketing Strategies 2025'"
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:border-primary-500 transition-colors"
               disabled={generating}
@@ -118,7 +121,7 @@ export default function ModalDemo({ onClose, onSuccess, onSignupPrompt }) {
             {generating ? (
               <>
                 <div className="spinner mr-2"></div>
-                Generating Article...
+                Generating Article... (~2 min)
               </>
             ) : (
               <>
