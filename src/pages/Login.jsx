@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../lib/auth'
@@ -7,10 +7,20 @@ import toast from 'react-hot-toast'
 
 export default function Login() {
   const navigate = useNavigate()
-  const { loginWithGoogle, loginWithMagicLink } = useAuth()
+  const location = useLocation()
+  const { loginWithGoogle, loginWithMagicLink, isAuthenticated, loading } = useAuth()
   const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      const from = location.state?.from?.pathname || '/dashboard'
+      console.log('✅ Already authenticated, redirecting to:', from)
+      navigate(from, { replace: true })
+    }
+  }, [isAuthenticated, loading, navigate, location])
 
   async function handleMagicLink(e) {
     e.preventDefault()
@@ -19,7 +29,7 @@ export default function Login() {
       return
     }
 
-    setLoading(true)
+    setSubmitting(true)
     try {
       await loginWithMagicLink(email)
       setSent(true)
@@ -27,8 +37,17 @@ export default function Login() {
     } catch (error) {
       toast.error(error.message || 'Failed to send magic link')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="spinner"></div>
+      </div>
+    )
   }
 
   return (
@@ -83,7 +102,7 @@ export default function Login() {
               </div>
               <h3 className="text-xl font-bold mb-2">Check your email</h3>
               <p className="text-gray-400 mb-4">
-                We sent a magic link to <strong>{email}</strong>
+                We sent a magic link to <strong className="text-white">{email}</strong>
               </p>
               <button
                 onClick={() => setSent(false)}
@@ -108,10 +127,10 @@ export default function Login() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={submitting}
                 className="w-full btn-primary disabled:opacity-50"
               >
-                {loading ? (
+                {submitting ? (
                   <>
                     <div className="spinner mr-2"></div>
                     Sending...
