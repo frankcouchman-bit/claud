@@ -2,90 +2,104 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { CheckCircle, Zap, Target, TrendingUp, ArrowRight, Sparkles } from 'lucide-react'
-
 import Navbar from '../components/layout/Navbar'
 import Footer from '../components/layout/Footer'
-import Hero from '../components/sections/Hero' // (kept in case you use it elsewhere)
 import Features from '../components/sections/Features'
 import Testimonials from '../components/sections/Testimonials'
 import Pricing from '../components/sections/Pricing'
 import CallToAction from '../components/sections/CallToAction'
-
-import { updatePageSEO, addStructuredData } from '../lib/seo'
-import { useAuth } from '../lib/auth'
-
-// NEW: replace old quota modal with dedicated demo + preview modals
 import ModalDemo from '../components/modals/ModalDemo'
 import ModalArticlePreview from '../components/modals/ModalArticlePreview'
+import ModalQuotaReached from '../components/modals/ModalQuotaReached'
+import { updatePageSEO, addStructuredData } from '../lib/seo'
+import { useAuth } from '../lib/auth'
 
 export default function Home() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth()
-
-  // NEW: state for the new flow
   const [showDemoModal, setShowDemoModal] = useState(false)
   const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [showQuotaModal, setShowQuotaModal] = useState(false)
   const [generatedArticle, setGeneratedArticle] = useState(null)
+  const [demoUsed, setDemoUsed] = useState(false)
 
   useEffect(() => {
     updatePageSEO({
       title: 'SEOScribe - AI-Powered Article Writer & SEO Content Generator',
-      description:
-        "Generate SEO-optimized articles in minutes with SEOScribe's AI article writer. Create 3000+ word content with built-in research, citations, and SEO tools. Start free today.",
+      description: 'Generate SEO-optimized articles in minutes with SEOScribe\'s AI article writer. Create 3000+ word content with built-in research, citations, and SEO tools. Start free today.',
       canonical: 'https://seoscribe.pro/',
-      keywords: [
-        'article writer',
-        'SEO article writer',
-        'AI content generator',
-        'SEO writing tool',
-        'content creation',
-      ],
+      keywords: ['article writer', 'SEO article writer', 'AI content generator', 'SEO writing tool', 'content creation']
     })
 
-    addStructuredData({
-      '@context': 'https://schema.org',
-      '@type': 'WebPage',
-      name: 'SEOScribe - AI Article Writer',
-      description: 'Professional AI-powered article writer for SEO-optimized content',
-      url: 'https://seoscribe.pro/',
-      mainEntity: {
-        '@type': 'SoftwareApplication',
-        name: 'SEOScribe',
-        applicationCategory: 'BusinessApplication',
-        offers: {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'USD',
-        },
-      },
-    })
+    // ✅ Check if demo was already used (localStorage + timestamp)
+    checkDemoStatus()
   }, [])
 
-  // NEW: Launch demo modal if logged out; go to dashboard if authed
-  function handleTryDemo() {
-    if (isAuthenticated) {
-      navigate('/dashboard')
-    } else {
-      setShowDemoModal(true)
+  function checkDemoStatus() {
+    const demoTimestamp = localStorage.getItem('seoscribe_demo_used')
+    
+    if (demoTimestamp) {
+      const usedDate = new Date(parseInt(demoTimestamp))
+      const now = new Date()
+      
+      // Check if it's been less than 30 days
+      const daysSinceDemo = (now - usedDate) / (1000 * 60 * 60 * 24)
+      
+      if (daysSinceDemo < 30) {
+        console.log('⚠️ Demo already used', Math.floor(daysSinceDemo), 'days ago')
+        setDemoUsed(true)
+      } else {
+        // More than 30 days, allow new demo
+        console.log('✅ Demo expired, allowing new one')
+        localStorage.removeItem('seoscribe_demo_used')
+        setDemoUsed(false)
+      }
     }
   }
 
-  // NEW: Receive generated article from ModalDemo and open preview
+  function handleTryDemo() {
+    if (isAuthenticated) {
+      navigate('/dashboard')
+      return
+    }
+
+    // ✅ Check if demo already used
+    if (demoUsed) {
+      setShowQuotaModal(true)
+      return
+    }
+
+    setShowDemoModal(true)
+  }
+
   function handleDemoSuccess(article) {
+    // ✅ Mark demo as used with timestamp
+    localStorage.setItem('seoscribe_demo_used', Date.now().toString())
+    setDemoUsed(true)
+    
     setGeneratedArticle(article)
     setShowDemoModal(false)
     setShowPreviewModal(true)
   }
 
+  function handleDemoError(error) {
+    // ✅ If backend says demo limit reached, mark as used locally too
+    if (error.message && error.message.includes('Demo limit')) {
+      localStorage.setItem('seoscribe_demo_used', Date.now().toString())
+      setDemoUsed(true)
+      setShowQuotaModal(true)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-950">
       <Navbar />
-
+      
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero"></div>
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20"></div>
-
+        
         <div className="container-custom relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -96,36 +110,54 @@ export default function Home() {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card mb-8"
             >
               <Sparkles className="w-4 h-4 text-accent-400" />
-              <span className="text-sm font-medium">Generate 3000+ word articles in minutes</span>
+              <span className="text-sm font-medium text-gray-200">Generate 3000+ word articles in minutes</span>
             </motion.div>
 
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
               Write <span className="text-gradient">SEO-Optimized</span>
-              <br />
-              Articles in Minutes
+              <br />Articles in Minutes
             </h1>
 
             <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
-              Professional AI article writer with built-in research, citations, and SEO tools. Create content
-              that ranks and converts.
+              Professional AI article writer with built-in research, citations, and SEO tools. Create content that ranks and converts.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button onClick={handleTryDemo} className="btn-primary text-lg group">
-                Try Free Demo
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              <button
+                onClick={handleTryDemo}
+                disabled={demoUsed && !isAuthenticated}
+                className="btn-primary text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {demoUsed && !isAuthenticated ? (
+                  <>
+                    Demo Used - Sign Up Free
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </>
+                ) : (
+                  <>
+                    Try Free Demo
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
-              <button onClick={() => navigate('/signup')} className="btn-ghost text-lg">
+              <button
+                onClick={() => navigate('/signup')}
+                className="btn-ghost text-lg"
+              >
                 View Pricing
               </button>
             </div>
 
             <p className="text-sm text-gray-400 mt-6">
-              No credit card required • 1 free demo • Upgrade anytime
+              {demoUsed && !isAuthenticated ? (
+                'Demo limit reached • Sign up for 1 free article per month'
+              ) : (
+                'No credit card required • 1 free demo • Upgrade anytime'
+              )}
             </p>
           </motion.div>
 
@@ -155,64 +187,6 @@ export default function Home() {
       {/* Features Section */}
       <Features />
 
-      {/* How It Works */}
-      <section className="section-padding bg-gray-900/50">
-        <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              From Idea to <span className="text-gradient">Published Article</span>
-            </h2>
-            <p className="text-xl text-gray-400">Three simple steps to professional content</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                step: '01',
-                title: 'Enter Your Topic',
-                description:
-                  'Simply describe what you want to write about. Our AI article writer understands context and intent.',
-                icon: '✍️',
-              },
-              {
-                step: '02',
-                title: 'AI Researches & Writes',
-                description:
-                  'Our SEO article writer researches top-ranking content, analyzes competitors, and generates optimized articles.',
-                icon: '🔍',
-              },
-              {
-                step: '03',
-                title: 'Edit & Publish',
-                description: 'Review, refine with built-in SEO tools, and publish content that ranks on Google.',
-                icon: '🚀',
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.2 }}
-                className="relative"
-              >
-                <div className="glass-card p-8 h-full">
-                  <div className="text-6xl mb-4">{item.icon}</div>
-                  <div className="text-4xl font-bold text-primary-400 mb-3">{item.step}</div>
-                  <h3 className="text-2xl font-bold mb-3">{item.title}</h3>
-                  <p className="text-gray-400">{item.description}</p>
-                </div>
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                    <ArrowRight className="w-8 h-8 text-primary-500" />
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Testimonials */}
       <Testimonials />
 
@@ -229,7 +203,11 @@ export default function Home() {
         <ModalDemo
           onClose={() => setShowDemoModal(false)}
           onSuccess={handleDemoSuccess}
-          onSignupPrompt={() => navigate('/signup')}
+          onError={handleDemoError}
+          onSignupPrompt={() => {
+            setShowDemoModal(false)
+            navigate('/signup')
+          }}
         />
       )}
 
@@ -237,7 +215,21 @@ export default function Home() {
       {showPreviewModal && generatedArticle && (
         <ModalArticlePreview
           article={generatedArticle}
-          onClose={() => setShowPreviewModal(false)}
+          onClose={() => {
+            setShowPreviewModal(false)
+            // Show signup prompt after viewing
+            setTimeout(() => navigate('/signup'), 1000)
+          }}
+        />
+      )}
+
+      {/* Quota Reached Modal */}
+      {showQuotaModal && (
+        <ModalQuotaReached
+          title="Demo Limit Reached"
+          message="You've used your free demo. Sign up to generate 1 article per month free, or upgrade to Pro for 15 articles per day!"
+          onClose={() => setShowQuotaModal(false)}
+          onUpgrade={() => navigate('/signup')}
         />
       )}
     </div>
