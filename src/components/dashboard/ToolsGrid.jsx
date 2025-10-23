@@ -82,7 +82,10 @@ export default function ToolsGrid({ user }) {
       return
     }
 
-    toast.success(`${tool.name} coming soon!`)
+    // ⬇️ Patch: actually go to the tool instead of "coming soon"
+    // If you have a single workspace page, you can swap this to:
+    // navigate(`/writing-tool?tool=${tool.id}`)
+    navigate(`/tools/${tool.id}`)
   }
 
   return (
