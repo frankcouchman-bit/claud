@@ -22,20 +22,49 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseUrl}${endpoint}`
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...this.getHeaders(options.auth),
-        ...options.headers,
-      },
-    })
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...this.getHeaders(options.auth),
+          ...options.headers,
+        },
+      })
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }))
-      throw new Error(error.error || error.message || 'Request failed')
+      // ✅ Handle non-200 responses
+      if (!response.ok) {
+        const errorText = await response.text()
+        let errorData
+        try {
+          errorData = JSON.parse(errorText)
+        } catch {
+          errorData = { error: errorText || 'Request failed' }
+        }
+        
+        const error = new Error(errorData.error || errorData.message || 'Request failed')
+        error.status = response.status
+        error.data = errorData
+        throw error
+      }
+
+      // ✅ Handle empty responses
+      const text = await response.text()
+      if (!text) {
+        return null
+      }
+
+      // ✅ Parse JSON safely
+      try {
+        return JSON.parse(text)
+      } catch (e) {
+        console.error('Failed to parse JSON:', text)
+        throw new Error('Invalid JSON response')
+      }
+    } catch (error) {
+      console.error('API request failed:', error)
+      throw error
     }
-
-    return response.json()
   }
 
   // Auth
@@ -48,7 +77,19 @@ class ApiClient {
 
   // Profile
   async getProfile() {
-    return this.request('/api/profile', { auth: true })
+    const response = await this.request('/api/profile', { auth: true })
+    // ✅ Ensure response has proper structure
+    return {
+      plan: response?.plan || 'free',
+      email: response?.email || '',
+      usage: response?.usage || { today: { generations: 0 }, month: { generations: 0 } },
+      tools_today: response?.tools_today || 0,
+      tool_usage_today: response?.tool_usage_today || 0,
+      tool_limit_daily: response?.tool_limit_daily || 1,
+      pro_trial_remaining: response?.pro_trial_remaining || 0,
+      pro_trial_used: response?.pro_trial_used || false,
+      onboarding_completed: response?.onboarding_completed || false,
+    }
   }
 
   async updateProfile(data) {
@@ -61,7 +102,9 @@ class ApiClient {
 
   // Articles
   async getArticles() {
-    return this.request('/api/articles', { auth: true })
+    const response = await this.request('/api/articles', { auth: true })
+    // ✅ Ensure it's always an array
+    return Array.isArray(response) ? response : []
   }
 
   async getArticle(id) {
@@ -95,13 +138,14 @@ class ApiClient {
   async generateDraft(data) {
     return this.request('/api/draft', {
       method: 'POST',
-      auth: !!localStorage.getItem('access_token'), // Optional auth
+      auth: !!localStorage.getItem('access_token'),
       body: JSON.stringify(data),
     })
   }
 
   async getTemplates() {
-    return this.request('/api/templates')
+    const response = await this.request('/api/templates')
+    return Array.isArray(response) ? response : []
   }
 
   async generateFromTemplate(data) {
