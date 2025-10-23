@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sparkles, ArrowRight } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -38,9 +38,28 @@ export default function ModalDemo({
 }) {
   const [topic, setTopic] = useState('')
   const [generating, setGenerating] = useState(false)
+  const mounted = useRef(true)
+
+  useEffect(() => {
+    mounted.current = true
+    return () => { mounted.current = false }
+  }, [])
+
+  function setGeneratingSafe(v) {
+    if (mounted.current) setGenerating(v)
+  }
+
+  function handleBackdropClick() {
+    if (generating) {
+      toast('Working on it…', { icon: '⏳' })
+      return
+    }
+    onClose?.()
+  }
 
   async function handleGenerate() {
-    if (!topic.trim()) {
+    const trimmed = topic.trim()
+    if (!trimmed) {
       toast.error('Please enter a topic')
       return
     }
@@ -59,10 +78,10 @@ export default function ModalDemo({
       }
     }
 
-    setGenerating(true)
+    setGeneratingSafe(true)
     try {
       const result = await api.generateDraft({
-        topic: topic.trim(),
+        topic: trimmed,
         tone: 'professional',
         target_word_count: 3000,
         research: true,
@@ -76,25 +95,53 @@ export default function ModalDemo({
     } catch (error) {
       console.error('❌ Demo generation failed:', error)
 
-      const msg = (error?.message || '').toLowerCase()
-      const quotaHit =
-        msg.includes('demo limit') ||
-        msg.includes('demo') ||
-        msg.includes('quota') ||
-        msg.includes('ip')
+      const status = error?.status
+      const serverMsg =
+        error?.data?.error || error?.data?.message || error?.message || ''
 
-      if (quotaHit) {
-        // Mirror server enforcement locally
+      const lowerMsg = (serverMsg || '').toLowerCase()
+      const quotaHit =
+        status === 429 ||
+        lowerMsg.includes('demo limit') ||
+        lowerMsg.includes('demo') ||
+        lowerMsg.includes('quota') ||
+        lowerMsg.includes('ip')
+
+      if (status === 401) {
+        toast.error('Your session expired — please sign in to continue.')
+        onSignupPrompt?.()
+        onError?.(error)
+      } else if (quotaHit) {
+        // Mirror server enforcement locally to avoid extra attempts
         safeSet(DEMO_KEY, Date.now().toString())
         toast.error('Demo limit reached. Sign up for free!')
         onError?.(error)
         onClose?.()
+      } else if (status === 403) {
+        toast.error('Access denied. Please sign in with the correct account.')
+        onSignupPrompt?.()
+        onError?.(error)
+      } else if (status === 408) {
+        toast.error('Request timed out. Please try again.')
+        onError?.(error)
+      } else if (serverMsg) {
+        toast.error(serverMsg)
+        onError?.(error)
       } else {
         toast.error('Failed to generate demo. Please try again.')
+        onError?.(error)
       }
     } finally {
-      setGenerating(false)
+      setGeneratingSafe(false) // 🔑 prevents “stuck on Starting…”
     }
+  }
+
+  function handleCloseClick() {
+    if (generating) {
+      toast('Please wait for this run to finish…', { icon: '⏳' })
+      return
+    }
+    onClose?.()
   }
 
   return (
@@ -105,7 +152,7 @@ export default function ModalDemo({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={() => onClose?.()}
+          onClick={handleBackdropClick}
           className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         />
 
@@ -120,9 +167,10 @@ export default function ModalDemo({
           aria-labelledby="demo-title"
         >
           <button
-            onClick={() => onClose?.()}
+            onClick={handleCloseClick}
             className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
             aria-label="Close"
+            disabled={generating}
           >
             <X className="w-6 h-6" />
           </button>
@@ -152,6 +200,7 @@ export default function ModalDemo({
               className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:border-primary-500 transition-colors"
               disabled={generating}
               autoFocus
+              aria-disabled={generating}
             />
           </div>
 
@@ -168,11 +217,12 @@ export default function ModalDemo({
             onClick={handleGenerate}
             disabled={generating || !topic.trim()}
             className="w-full btn-primary text-lg group disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-busy={generating}
           >
             {generating ? (
               <>
                 <div className="spinner mr-2"></div>
-                Generating Article... (~2 min)
+                Generating article…
               </>
             ) : (
               <>
@@ -183,7 +233,7 @@ export default function ModalDemo({
           </button>
 
           <p className="text-center text-sm text-gray-500 mt-4">
-            No credit card required • 1 free demo • Takes ~2 minutes
+            No credit card required • 1 free demo
           </p>
 
           {/* Optional tiny CTA if you want to nudge sign-up right here */}
@@ -192,6 +242,7 @@ export default function ModalDemo({
               type="button"
               className="text-sm text-primary-300 hover:underline"
               onClick={() => onSignupPrompt?.()}
+              disabled={generating}
             >
               Prefer unlimited runs? Create a free account →
             </button>
