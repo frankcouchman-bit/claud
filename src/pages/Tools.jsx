@@ -9,12 +9,13 @@ import toast from 'react-hot-toast'
 
 export default function Tools() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const { user, isPro, upgradeToPro } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { user, isPro, upgradeToPro, loadUser, setUser } = useAuth()
   const [showQuotaModal, setShowQuotaModal] = useState(false)
   const [showNewModal, setShowNewModal] = useState(false)
   const [busy, setBusy] = useState(false)
   const mounted = useRef(true)
+  const openedFromQuery = useRef(false) // ⬅️ ensures we only open once per visit
 
   useEffect(() => {
     mounted.current = true
@@ -23,11 +24,15 @@ export default function Tools() {
 
   useEffect(() => {
     const action = searchParams.get('action')
-    if (action === 'generate' && !busy) {
-      // Open the pre-generation modal instead of auto-generating
+    if (action === 'generate' && !busy && !openedFromQuery.current) {
+      openedFromQuery.current = true
       setShowNewModal(true)
+      // ⬇️ Clear the query so the modal doesn’t re-open on rerender/back
+      const next = new URLSearchParams(searchParams)
+      next.delete('action')
+      setSearchParams(next, { replace: true })
     }
-  }, [searchParams, busy])
+  }, [searchParams, busy, setSearchParams])
 
   function normalizeArticleId(result) {
     return (
@@ -40,9 +45,23 @@ export default function Tools() {
     )
   }
 
+  async function refreshProfileSoft() {
+    try {
+      if (typeof loadUser === 'function') {
+        await loadUser()
+      } else if (typeof setUser === 'function') {
+        const profile = await api.getProfile()
+        setUser(profile)
+      }
+    } catch {
+      // non-blocking
+    }
+  }
+
   async function startGeneration(values) {
     if (!user) {
-      navigate('/login')
+      // preserve intent so users return to the modal after login
+      navigate('/login?return=/tools%3Faction%3Dgenerate')
       return
     }
 
@@ -66,11 +85,14 @@ export default function Tools() {
         target_word_count: values.target_word_count || values.targetWords || 2500,
         region: values.region || 'us',
         research: !!values.research,
-        generate_social: !!values.generate_social ?? !!values.generateSocial,
+        generate_social: (values.generate_social ?? values.generateSocial) ? true : false,
       }
 
       const result = await api.generateDraft(payload)
       const id = normalizeArticleId(result)
+
+      // ⬇️ Immediately refresh profile so quota UI updates everywhere
+      await refreshProfileSoft()
 
       toast.success('Article generated!', { id: toastId })
       setShowNewModal(false)
@@ -80,7 +102,7 @@ export default function Tools() {
       const msg = error?.data?.error || error?.data?.message || error?.message || 'Failed to generate'
       if (status === 401) {
         toast.error('Session expired — please sign in.', { id: toastId })
-        navigate('/login')
+        navigate('/login?return=/tools%3Faction%3Dgenerate')
       } else if (status === 429) {
         toast.error('Daily limit reached. Upgrade to Pro for more runs.', { id: toastId })
       } else if (status === 408) {
